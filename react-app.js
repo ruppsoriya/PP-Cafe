@@ -1,48 +1,38 @@
-const { useEffect, useMemo, useState } = React;
+const { useMemo, useState } = React;
 
-const API_BASE = 'backend/public/api.php';
-
-async function fetchJson(params) {
-  const query = new URLSearchParams(params).toString();
-  const response = await fetch(`${API_BASE}?${query}`);
-  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
-  return response.json();
-}
+const cafes = [
+  { id: 1, name: 'Brown Coffee & Bakery', area: 'BKK1', price: '$$', rating: 4.7, vibe: ['Work-friendly', 'Modern'], wifi: 'Excellent', address: 'Street 214, BKK1, Phnom Penh', facebook: 'https://facebook.com/browncoffeebakery', telephone: '+855 23 000 111', openingHours: '7:00 AM - 10:00 PM', googleMap: 'https://maps.google.com/?q=Brown+Coffee+Bakery+Phnom+Penh', logo: 'https://placehold.co/96x96/png?text=Brown' },
+  { id: 2, name: 'Backyard Café', area: 'BKK1', price: '$$$', rating: 4.6, vibe: ['Healthy', 'Stylish'], wifi: 'Good', address: 'Street 63, BKK1, Phnom Penh', facebook: 'https://facebook.com/backyardcafepp', telephone: '+855 12 555 222', openingHours: '7:30 AM - 9:00 PM', googleMap: 'https://maps.google.com/?q=Backyard+Cafe+Phnom+Penh', logo: 'https://placehold.co/96x96/png?text=Backyard' },
+  { id: 3, name: 'Sister Srey Café', area: 'Wat Phnom', price: '$$', rating: 4.8, vibe: ['Brunch', 'Cozy'], wifi: 'Excellent', address: 'Street 178, Wat Phnom, Phnom Penh', facebook: 'https://facebook.com/sistersreycafe', telephone: '+855 15 777 333', openingHours: '8:00 AM - 5:00 PM', googleMap: 'https://maps.google.com/?q=Sister+Srey+Cafe+Phnom+Penh', logo: 'https://placehold.co/96x96/png?text=Sister' }
+];
 
 function App() {
-  const [cafes, setCafes] = useState([]);
-  const [areas, setAreas] = useState([]);
-  const [vibes, setVibes] = useState([]);
   const [q, setQ] = useState('');
   const [area, setArea] = useState('all');
   const [vibe, setVibe] = useState('all');
-  const [limit, setLimit] = useState(24);
-  const [totalCount, setTotalCount] = useState(0);
 
-  useEffect(() => {
-    fetchJson({ endpoint: 'meta' }).then((data) => {
-      setAreas(data.areas || []);
-      setVibes(data.vibes || []);
+  const areas = useMemo(() => [...new Set(cafes.map((c) => c.area))], []);
+  const vibes = useMemo(() => [...new Set(cafes.flatMap((c) => c.vibe))], []);
+
+  const filtered = useMemo(() => {
+    const query = q.toLowerCase().trim();
+    return cafes.filter((cafe) => {
+      const haystack = `${cafe.name} ${cafe.area} ${cafe.address} ${cafe.wifi} ${cafe.vibe.join(' ')}`.toLowerCase();
+      const matchSearch = query === '' || haystack.includes(query);
+      const matchArea = area === 'all' || cafe.area === area;
+      const matchVibe = vibe === 'all' || cafe.vibe.includes(vibe);
+      return matchSearch && matchArea && matchVibe;
     });
-  }, []);
-
-  useEffect(() => {
-    fetchJson({ endpoint: 'cafes', q, area, vibe, limit }).then((data) => {
-      setCafes(data.cafes || []);
-      setTotalCount(data.count || 0);
-    });
-  }, [q, area, vibe, limit]);
-
-  const resultText = useMemo(() => `${totalCount} cafes found`, [totalCount]);
+  }, [q, area, vibe]);
 
   return (
     <>
-      <nav className="top-nav"><div className="container nav-inner"><strong>PP Café Finder</strong><span>150 local cafés in Phnom Penh</span></div></nav>
+      <nav className="top-nav"><div className="container nav-inner"><strong>PP Café Finder</strong><span>No API required</span></div></nav>
       <header className="hero"><div className="hero__content container">
-        <h1>Discover Phnom Penh cafés</h1>
-        <p className="sub">Name, rating, Wi‑Fi, vibe, Google Maps, logo, address, Facebook, phone and more.</p>
+        <h1>Phnom Penh Café Recommendations</h1>
+        <p className="sub">Works without backend API. Everything runs directly in frontend.</p>
         <div className="search-row">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, address, vibe..." />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search café..." />
           <select value={area} onChange={(e) => setArea(e.target.value)}>
             <option value="all">All areas</option>{areas.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
@@ -50,10 +40,9 @@ function App() {
         <div className="chips"><button className={`chip ${vibe === 'all' ? 'active' : ''}`} onClick={() => setVibe('all')}>All</button>{vibes.map((v) => <button key={v} className={`chip ${vibe === v ? 'active' : ''}`} onClick={() => setVibe(v)}>{v}</button>)}</div>
       </div></header>
       <main className="container">
-        <section className="section-head"><h2>Recommended cafés</h2><p>{resultText}</p></section>
-        <div className="row" style={{ marginBottom: '0.8rem' }}><strong>Show:</strong><select value={limit} onChange={(e) => setLimit(Number(e.target.value))}><option value={24}>24</option><option value={60}>60</option><option value={150}>150</option></select><span>Showing {cafes.length} of {totalCount}</span></div>
+        <section className="section-head"><h2>Recommended cafés</h2><p>{filtered.length} cafes found</p></section>
         <section className="grid">
-          {cafes.map((cafe) => (
+          {filtered.map((cafe) => (
             <article className="card" key={cafe.id}>
               <img src={cafe.logo} alt={`${cafe.name} logo`} width="48" height="48" />
               <h4>{cafe.name}</h4>
