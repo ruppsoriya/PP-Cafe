@@ -17,6 +17,7 @@ function App() {
   const [area, setArea] = useState('all');
   const [vibe, setVibe] = useState('all');
   const [limit, setLimit] = useState(24);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     fetchJson({ endpoint: 'meta' }).then((data) => {
@@ -26,10 +27,13 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetchJson({ endpoint: 'cafes', q, area, vibe, limit }).then((data) => setCafes(data.cafes || []));
+    fetchJson({ endpoint: 'cafes', q, area, vibe, limit }).then((data) => {
+      setCafes(data.cafes || []);
+      setTotalCount(data.count || 0);
+    });
   }, [q, area, vibe, limit]);
 
-  const resultText = useMemo(() => `${cafes.length} cafes found`, [cafes]);
+  const resultText = useMemo(() => `${totalCount} cafes found`, [totalCount]);
 
   return (
     <>
@@ -47,7 +51,7 @@ function App() {
       </div></header>
       <main className="container">
         <section className="section-head"><h2>Recommended cafés</h2><p>{resultText}</p></section>
-        <div className="row" style={{ marginBottom: '0.8rem' }}><strong>Show:</strong><select value={limit} onChange={(e) => setLimit(Number(e.target.value))}><option value={24}>24</option><option value={60}>60</option><option value={150}>150</option></select></div>
+        <div className="row" style={{ marginBottom: '0.8rem' }}><strong>Show:</strong><select value={limit} onChange={(e) => setLimit(Number(e.target.value))}><option value={24}>24</option><option value={60}>60</option><option value={150}>150</option></select><span>Showing {cafes.length} of {totalCount}</span></div>
         <section className="grid">
           {cafes.map((cafe) => (
             <article className="card" key={cafe.id}>
