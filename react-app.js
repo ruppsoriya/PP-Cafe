@@ -16,6 +16,7 @@ function App() {
   const [q, setQ] = useState('');
   const [area, setArea] = useState('all');
   const [vibe, setVibe] = useState('all');
+  const [limit, setLimit] = useState(24);
 
   useEffect(() => {
     fetchJson({ endpoint: 'meta' }).then((data) => {
@@ -25,8 +26,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetchJson({ endpoint: 'cafes', q, area, vibe }).then((data) => setCafes(data.cafes || []));
-  }, [q, area, vibe]);
+    fetchJson({ endpoint: 'cafes', q, area, vibe, limit }).then((data) => setCafes(data.cafes || []));
+  }, [q, area, vibe, limit]);
 
   const resultText = useMemo(() => `${cafes.length} cafes found`, [cafes]);
 
@@ -46,6 +47,7 @@ function App() {
       </div></header>
       <main className="container">
         <section className="section-head"><h2>Recommended cafés</h2><p>{resultText}</p></section>
+        <div className="row" style={{ marginBottom: '0.8rem' }}><strong>Show:</strong><select value={limit} onChange={(e) => setLimit(Number(e.target.value))}><option value={24}>24</option><option value={60}>60</option><option value={150}>150</option></select></div>
         <section className="grid">
           {cafes.map((cafe) => (
             <article className="card" key={cafe.id}>
